@@ -1,0 +1,109 @@
+package aml.poc.bo;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import aml.poc.bo.ConnectionManager;
+
+public class LoginBO {
+
+	public String checkLoginDetails(String email, String password) throws SQLException{
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		 String Email = null ;
+		 String Password = null;
+		final String Success= "success";
+		final String failure = "failure";
+		
+		try {
+			Class.forName("com.mysql.jdbc.Driver");
+		} catch (ClassNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}  
+		Connection con=DriverManager.getConnection(  
+		"jdbc:mysql://localhost:3306/sonoo","root","root");  
+		
+		StringBuffer loginQuery = new StringBuffer();
+		loginQuery.append("select emailid,password from user_details");
+		loginQuery.append( " where emailid = "+email+ "and password = "+password );
+		
+		try {
+			ps = con.prepareStatement(loginQuery.toString());
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		rs = ps.executeQuery();
+		
+		while (rs.next()) {
+			  Email = rs.getString("email");
+			 Password = rs.getString("password");
+		}
+		
+		if (Email.equalsIgnoreCase(email) && Password.equalsIgnoreCase(password))
+		return Success;
+		
+		else 
+			return failure;
+	}
+
+}
+
+
+-------------------------------------------------------------------------------------------
+
+
+
+
+package aml.poc.bean;
+
+import java.sql.SQLException;
+import java.text.MessageFormat;
+import java.util.List;
+
+import org.apache.struts.action.ActionForm;
+
+import aml.poc.bo.LoginBO;
+
+public class LoginBean extends ActionForm {
+
+	public String emailId;
+	public String password;
+	
+
+
+	public String getEmailId() {
+		return emailId;
+	}
+	public void setEmailId(String emailId) {
+		this.emailId = emailId;
+	}
+	public String getPassword() {
+		return password;
+	}
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+
+	public String checkLoginCredentials( String email, String password ){
+
+		String Success = "success";
+		LoginBO loginBo = new LoginBO();
+		try {
+			loginBo.checkLoginDetails( email,  password);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return Success   ;
+	}
+
+
+
+}
+
