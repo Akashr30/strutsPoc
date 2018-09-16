@@ -1,0 +1,365 @@
+RegisterAction
+
+package aml.poc.action;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.struts.action.Action;
+import org.apache.struts.action.ActionForm;
+import org.apache.struts.action.ActionForward;
+import org.apache.struts.action.ActionMapping;
+
+import aml.poc.bean.RegisterBean;
+import aml.poc.mapping.UserMapping;
+
+public class RegisterAction extends Action{
+	
+
+ 	public ActionForward execute ( ActionMapping mapping, ActionForm form,
+			HttpServletRequest request ,  HttpServletResponse response){
+ 		
+		RegisterBean register = (RegisterBean) form;
+		String mode = request.getParameter("mode");
+		String page = request.getParameter("page");
+		
+		if (UserMapping.REGISTER.equalsIgnoreCase(mode)){
+		register.submitUserDetails(register);
+		}
+	return null;
+ 	}
+}
+
+------------------------------------------------------------------------------------------------
+
+REGISTER BEAN
+package aml.poc.bean;
+
+import org.apache.struts.action.ActionForm;
+
+import aml.poc.bo.RegisterBO;
+
+public class RegisterBean extends ActionForm {
+ 	public String firstName;
+	public String lastName;
+	public String emailId;
+	public String password;
+	public String gender;
+	public String address;
+	public String city;
+	public String state;
+	public String phoneNumber;
+	
+ 	public String getFirstName() {
+		return firstName;
+	}
+	public void setFirstName(String firstName) {
+		this.firstName = firstName;
+	}
+ 	public String getLastName() {
+		return lastName;
+	}
+	public void setLastName(String lastName) {
+		this.lastName = lastName;
+	}
+ 	public String getEmailId() {
+		return emailId;
+	}
+	public void setEmailId(String emailId) {
+		this.emailId = emailId;
+	}
+ 	public String getPassword() {
+		return password;
+	}
+	public void setPassword(String password) {
+		this.password = password;
+	}
+ 	public String getGender() {
+		return gender;
+	}
+	public void setGender(String gender) {
+		this.gender = gender;
+	}
+ 	public String getAddress() {
+		return address;
+	}
+	public void setAddress(String address) {
+		this.address = address;
+	}
+ 	public String getCity() {
+		return city;
+	}
+	public void setCity(String city) {
+		this.city = city;
+	}
+ 	public String getState() {
+		return state;
+	}
+	public void setState(String state) {
+		this.state = state;
+	}
+ 	public String getPhoneNumber() {
+		return phoneNumber;
+	}
+	public void setPhoneNumber(String phoneNumber) {
+		this.phoneNumber = phoneNumber;
+	}
+	
+	
+ 	public String submitUserDetails(RegisterBean register) {
+ 		
+ 		RegisterBO registerBo = new RegisterBO();
+ 		return registerBo.saveRegisterDetails(register);
+ 	}
+ }
+ 
+--------------------------------------------------------------------------------------------------------
+
+REGISTERBO
+
+
+
+package aml.poc.bo;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import aml.poc.bean.RegisterBean;
+
+public class RegisterBO {
+
+	public String saveRegisterDetails(RegisterBean register) {
+		
+		String firstName = register.getFirstName();
+		String lastName = register.getLastName();
+		String emailId = register.getEmailId();
+		String password = register.getPassword();
+		String gender = register.getGender();
+		String address = register.getAddress();
+		String city = register.getCity();
+		String state = register.getState();
+		String phNo = register.getPhoneNumber();
+		
+		final String Success= "success";
+		final String Failure = "failure";
+		PreparedStatement ps = null; 
+		ResultSet rs = null;
+		 int count = 0 ;
+		
+		try {
+			Class.forName("com.mysql.jdbc.Driver");
+		} catch (ClassNotFoundException e1) {
+			e1.printStackTrace();
+		}  
+		Connection con = null;
+		try {
+			con = DriverManager.getConnection(  
+			"jdbc:mysql://localhost:3306/sonoo","root","root");
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+		}
+		
+		StringBuffer saveDetails = new StringBuffer();
+		saveDetails.append("INSERT INTO USER CREDENTIALS VALUES ("+firstName+","+lastName+","+emailId+
+							","+password+","+gender+","+address+","+city+","+state+","+phNo+")");
+		try {
+		ps = con.prepareStatement(saveDetails.toString());
+		}catch (SQLException e ){
+			e.printStackTrace();
+		}
+		try {
+			 count  = ps.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		if ( count > 0 )
+		return Success;
+		
+		else 
+			return Failure;
+		
+	}
+
+}
+
+------------------------------------------------------------------------------------------------
+
+LOGIN ACTION
+
+
+package aml.poc.action;
+
+import java.sql.SQLException;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.struts.action.Action;
+import org.apache.struts.action.ActionForm;
+import org.apache.struts.action.ActionForward;
+import org.apache.struts.action.ActionMapping;
+
+import aml.poc.bean.LoginBean;
+import aml.poc.mapping.UserMapping;
+
+public class LoginAction  extends Action{
+
+	public ActionForward execute ( ActionMapping mapping, ActionForm form,
+									HttpServletRequest request, HttpServletResponse response) throws SQLException {
+
+		LoginBean loginBean = (LoginBean) form;
+
+		String mode = request.getParameter("mode");
+		String page = request.getParameter("page");
+
+		if (UserMapping.LOGIN.equalsIgnoreCase(mode)){
+
+			String accNo = loginBean.getAccountNo();
+			String password = loginBean.getPassword();
+
+			loginBean.checkLoginCredentials(accNo,password);
+			loginBean.getCurrentBalance(accNo);
+
+			return mapping.findForward("success");
+		}
+
+return mapping.findForward("success");
+
+
+	}
+
+}
+---------------------------------------------------------------------------------
+
+LOGIN BEAN
+
+
+
+package aml.poc.bean;
+
+import java.sql.SQLException;
+import java.text.MessageFormat;
+import java.util.List;
+
+import org.apache.struts.action.ActionForm;
+
+import aml.poc.bo.LoginBO;
+
+public class LoginBean extends ActionForm {
+
+	public String accountNo;
+	public String password;
+
+	
+	public String getAccountNo() {
+		return accountNo;
+	}
+	public void setAccountNo(String accountNo) {
+		this.accountNo = accountNo;
+	}
+	public String getPassword() {
+		return password;
+	}
+	public void setPassword(String password) {
+		this.password = password;
+	}
+	
+	LoginBO loginBo = new LoginBO();
+		
+	public String checkLoginCredentials( String accNo, String password ) throws SQLException{
+
+			return loginBo.checkLoginDetails( accNo,  password);
+	}
+	
+	public void getCurrentBalance (String accNo) {
+		String currentBalance =  loginBo.getBalance(accNo);
+	}
+
+}
+
+
+
+
+-------------------------------------------------------------------------------------------------------------------
+
+
+LOGIN BO
+
+
+package aml.poc.bo;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import aml.poc.bo.ConnectionManager;
+
+public class LoginBO {
+	
+	PreparedStatement ps = null;
+	ResultSet rs = null;
+
+	public String checkLoginDetails(String accNo, String password) throws SQLException{
+		
+		 String AccNo = null ;
+		 String Password = null;
+		final String Success= "success";
+		final String failure = "failure";
+		
+		try {
+			Class.forName("com.mysql.jdbc.Driver");
+		} catch (ClassNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}  
+		Connection con=DriverManager.getConnection(  
+		"jdbc:mysql://localhost:3306/sonoo","root","root");  
+		
+		StringBuffer loginQuery = new StringBuffer();
+		loginQuery.append("select emailid,password from user_details");
+		loginQuery.append( " where emailid = "+accNo+ "and password = "+password );
+		
+		try {
+			ps = con.prepareStatement(loginQuery.toString());
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		rs = ps.executeQuery();
+		
+		while (rs.next()) {
+			  AccNo = rs.getString("accountNo");
+			 Password = rs.getString("password");
+		}
+		
+		if (accNo.equalsIgnoreCase(AccNo) && Password.equalsIgnoreCase(password))
+		return Success;
+		
+		else 
+			return failure;
+	}
+
+	public String getBalance(String accNo) {
+		
+		StringBuffer balanceQuery = new StringBuffer();
+		String balanceAmount = null;
+		balanceQuery.append("select Acc_balance from userAccounts where AccNumber = "+accNo );
+		
+		ps = con.preparedStatement(balanceQuery.toString());
+		rs = ps.executeQuery();
+		
+		while (rs.next()) {
+			 balanceAmount = rs.getString("Acc_balance"); 
+		}
+		return balanceAmount;
+	}
+
+}
+
+
+
