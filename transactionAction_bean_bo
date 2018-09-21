@@ -1,0 +1,163 @@
+transactionAction
+
+
+package com.poc.aml.action;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.struts.action.Action;
+import org.apache.struts.action.ActionForm;
+import org.apache.struts.action.ActionForward;
+import org.apache.struts.action.ActionMapping;
+
+import com.poc.aml.bean.LoginBean;
+import com.poc.aml.bean.TransactionBean;
+import com.poc.aml.mapping.UserMapping;
+
+public class TransactionAction extends Action {
+
+	public  ActionForward execute ( ActionMapping mapping, ActionForm form,
+									HttpServletRequest request, HttpServletResponse response ){
+
+		TransactionBean transacationBean = (TransactionBean) form;
+		LoginBean loginBean;
+		String mode = request.getParameter("mode");
+		String page = request.getParameter("page");
+
+		String userAccNo = transacationBean.getLoginBean().accountNo;
+		String beneficiaryAccNo = transacationBean.getBeneficiaryAccountNo();
+		String txnAmount = transacationBean.getTransactionAmount();
+		String accType = transacationBean.getAccountType();
+
+		if (UserMapping.TXNHISTORY.equalsIgnoreCase(mode)) {
+			transacationBean.getTxnHistory(userAccNo);
+		}
+
+		return ;
+	}
+
+}
+--------------------------------------------------------------------------------------------------------------
+
+txnBean.java
+
+
+
+package com.poc.aml.bean;
+
+import org.apache.struts.action.ActionForm;
+
+import com.poc.aml.bo.TransactionBO;
+
+public class TransactionBean extends ActionForm{
+
+//	public String transactorAccountNo;
+	public String beneficiaryAccountNo;
+	public String transactionAmount;
+	public String accountType;
+	public LoginBean loginBean;
+
+
+	public LoginBean getLoginBean() {
+		return loginBean;
+	}
+	public void setLoginBean(LoginBean loginBean) {
+		this.loginBean = loginBean;
+	}
+//	public String getTransactorAccountNo() {
+//		return transactorAccountNo;
+//	}
+//	public void setTransactorAccountNo(String transactorAccountNo) {
+//		this.transactorAccountNo = transactorAccountNo;
+//	}
+	public String getBeneficiaryAccountNo() {
+		return beneficiaryAccountNo;
+	}
+	public void setBeneficiaryAccountNo(String beneficiaryAccountNo) {
+		this.beneficiaryAccountNo = beneficiaryAccountNo;
+	}
+	public String getTransactionAmount() {
+		return transactionAmount;
+	}
+	public void setTransactionAmount(String transactionAmount) {
+		this.transactionAmount = transactionAmount;
+	}
+	public String getAccountType() {
+		return accountType;
+	}
+	public void setAccountType(String accountType) {
+		this.accountType = accountType;
+	}
+
+	TransactionBO transactionbo = new TransactionBO();
+
+	public void getTxnHistory(String userAccNo) {
+
+		transactionbo.getTxnhistory(userAccNo);
+
+
+	}
+
+
+
+}
+----------------------------------------------------------------------------------
+
+txnBo.java
+
+
+package com.poc.aml.bo;
+
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class TransactionBO {
+
+	ResultSet rs = null;
+	PreparedStatement ps = null;
+	Map < Integer,String > txnRecords = new HashMap < Integer,String >();
+
+	public Map < Integer,String > getTxnhistory (String accNo) {
+
+		Connection con = null;
+		try {
+			Class.forName("com.mysql.jdbc.Driver");
+		} catch (ClassNotFoundException e1) {
+			e1.printStackTrace();
+		}
+		try {
+			con = DriverManager.getConnection(
+					"jdbc:sqlserver://192.168.40.105\\SQLEXPRESS:1433;databaseName=AML_Training;username=sa; password = sql123");
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+		}
+
+
+		StringBuffer historyOfTxns = new StringBuffer();
+		historyOfTxns.append(" SELECT TOP 10 ACCOUNT_NO,TXN_AMT,BENEFICIARY_ACC_NO,TXN_DATE FROM USER_TRANSACATIONS ORDER BY TXNDATE DESC ");
+		ps = con.prepareStatement(historyOfTxns.toString());
+		rs = ps.executeQuery();
+
+		while (rs.next()){
+				String accNumber = rs.getString("ACCOUNT_NO");
+				int txnAmt = rs.getInt("TXN_AMT");
+				String otherPartyAccNo = rs.getString("BENEFICIARY_ACC_NO");
+				Date txnDate = rs.getDate("TXN_DATE");
+
+		}
+
+
+
+		return ;
+
+	}
+
+}
